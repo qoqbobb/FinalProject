@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	<!-- 스프링 시큐리티가 동작하기 위해선 authentication-manager라는 존재와 시작지점이 필요하기 때문에 아래와 같은 설정 필요 -->
+	<bean id="customAccessDenied" class="com.spring.security.CustomAccessDeniedHandler"></bean>
+	<bean id="customLoginSuccess" class="com.spring.security.CustomLoginSuccessHandler"></bean>
+	<bean id="customPasswordEncoder" class="com.spring.security.CustomPasswordEncoder"></bean>
+	<bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"></bean>
+	<bean id="customUserDetailsService" class="com.spring.security.CustomUserDetailService"></bean>
+	
+	<security:http auto-config="true" use-expressions="true">
+	<security:intercept-url pattern="/test/all" access="permitAll"/>
+	<security:intercept-url pattern="/test/member" access="hasRole('ROLE_USER')"/>	
+	
+	<!-- <security:form-login/> 로그인 폼 제공-->
+		<!-- <security:form-login login-page="/customLogin" authentication-success-handler-ref="customLoginSuccess" /> -->
+		<security:form-login login-page="/customLogin" />
+		
+		<security:logout logout-url="/customLogout" invalidate-session="true" delete-cookies="remember-me,JSESSION_ID"/>
+	
+	<!-- <security:access-denied-handler error-page="/accessError"/> -->
+	<security:access-denied-handler ref="customAccessDenied"/><!--bean id =customAccessDenied  -->
+	<security:remember-me data-source-ref="dataSource" token-validity-seconds="604800"/>
+	
+	</security:http>
+	
+	
+	
+	<security:authentication-manager>
+	<!-- <security:authentication-provider> -->
+	<security:authentication-provider user-service-ref="customUserDetailsService">
+	
+	<!--  <security:jdbc-user-service data-source-ref="dataSource" 
+	users-by-username-query="select USER_ID as userid,USER_PW as userpw ,enabled from users where USER_ID= ?"
+	authorities-by-username-query="select userid, auth from authorities where userid = ?" /> -->
+	<security:password-encoder ref="bcryptPasswordEncoder"/>	
+	
+	</security:authentication-provider>
+	</security:authentication-manager>
+	<!-- ============================================================================================== -->
+	
+	
+	
+	
+	
+	
+
+</beans>
