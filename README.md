@@ -148,158 +148,176 @@ select count(*) from users where USER_ID = #{USER_ID}
 </div>
 
 
+>  - SpringMVC 시큐리티 Bcrypt 적용
 
-### register.jsp 중 파일 업로드를 처리하는 ajax
-~~~JavaScript
-$("input[type='file']").on("change", function(e){
-	if($(".imgDeleteBtn").length > 0){
-		deleteFile();
-	}
-	let formData = new FormData();
-	let fileInput = $('input[name="uploadFile"]');
-	let fileList = fileInput[0].files;
-	let fileObj = fileList[0];
+- 비밀번호 암호화
+### UsersController.java : 비밀번호 암호화
 
-	 if(!fileCheck(fileObj.name, fileObj.size)){
-		return false;
-	} 
-	
-		formData.append("uploadFile", fileObj);
-	
-	$.ajax({
-		url: '/uploadAjaxAction',
-    	processData : false,
-    	contentType : false,
-    	data : formData,
-    	
-    	 beforeSend: function(xhr) {
-    			xhr.setRequestHeader(csrfHeaderName,csrfTokenValue);
-    		},
-    	
-    	type : 'POST',
-    	dataType : 'json',
-    	success : function(result){
-	    		console.log(result);
-	    		showUploadImage(result);
-	    	},
-			error : function(result){
-				alert("이미지 파일이 아닙니다.");
-	    	}
-	});
-});
-~~~
-### : 글을 등록할때 파일 정보를 참조할 수 있도록 hidden으로 함께 전송
-~~~JavaScript
-if(!uploadResultArr || uploadResultArr.length == 0){return}
-	
-	let uploadResult = $("#uploadResult");
-	
-	let obj = uploadResultArr[0];
-	
-	let str = "";
-	
-	let fileCallPath = encodeURIComponent(obj.uploadPath.replace(/\\/g, '/') + "/s_" + obj.uuid + "_" + obj.fileName);
-	
-	str += "<div id='result_card'>";
-	str += "<img src='/display?fileName=" + fileCallPath +"'>";
-	str += "<div class='imgDeleteBtn' data-file='"+fileCallPath+"'>x</div>";
-	str += "<input type='hidden' name='imageList[0].fileName' value='"+ obj.fileName +"'>";
-	str += "<input type='hidden' name='imageList[0].uuid' value='"+ obj.uuid +"'>";
-	str += "<input type='hidden' name='imageList[0].uploadPath' value='"+ obj.uploadPath +"'>";
-	str += "</div>";		
-	
-		uploadResult.append(str);  
-~~~
-
-### UploadController.java : 파일 등록 부분
 ~~~java
-@PostMapping(value="/uploadAjaxAction", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-	 public ResponseEntity<List<AttachImageVO>> uploadAjaxActionPOST(MultipartFile[] uploadFile){
+@Autowired
+	private BCryptPasswordEncoder pwEncoder;
+	
+	
+	
+	@PostMapping("/insert")
+	public String insertpost(UsersVO uservo) {
+		String originPw = "";
+		String bcryptPw = "";
 		
-		String uploadFolder = "C:\\upload";
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-		Date date = new Date();
-		String str = sdf.format(date);
-		String datePath = str.replace("-", File.separator);
-		File uploadPath = new File(uploadFolder, datePath);
+		originPw = uservo.getUSER_PW();
+		bcryptPw = pwEncoder.encode(originPw);
+		uservo.setUSER_PW(bcryptPw);
 		
-		if(uploadPath.exists() == false) {
-			uploadPath.mkdirs();
+		
+		log.info("유저정보"+uservo);
+		userserivce.userInsert(uservo);
+		return "redirect:/";
+	}
+	
+~~~
+
+<div>
+  <img src="https://user-images.githubusercontent.com/105841315/191143007-c847b3ed-c9de-40b9-88dd-9d8ca3958166.gif">
+</div>
+
+
+>  - SpringBoot 시큐리티 권한설정
+
+- 권한설정
+
+### SecurityConfig.java : 페이지 권한설정
+
+~~~java
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		
+		http.authorizeRequests()
+			.antMatchers("/user/**").authenticated()
+			.antMatchers("/admin/**","/board/register").access("hasRole('ROLE_ADMIN')")
+			.anyRequest().permitAll()
+			.and()
+			.formLogin()
+			.loginPage("/loginForm")
+			.loginProcessingUrl("/login")
+			.defaultSuccessUrl("/");
+			
+	}
+~~~
+
+<div>
+  <img src="https://user-images.githubusercontent.com/105841315/191143007-c847b3ed-c9de-40b9-88dd-9d8ca3958166.gif">
+</div>
+
+
+>  - SpringBoot 회원관리 페이징, 검색처리 , 
+
+- 페이징
+### SecurityConfig.java : 회원관리 페이징 컨트롤러
+
+~~~java
+@GetMapping("/list")
+	public void userList(Model model,
+			@PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable,
+			@RequestParam(required = false, defaultValue = "") String field,
+			@RequestParam(required = false, defaultValue = "") String word) {
+		Page<Users> ulist = usersRepository.findAll(pageable);
+		if(field.equals("USERID")) {
+			ulist = usersRepository.findByUSERIDContaining(word, pageable);
 		}
-		List<AttachImageVO> list = new ArrayList();
-	   for(MultipartFile multipartFile : uploadFile) {
-		   AttachImageVO vo = new AttachImageVO();
-			String uploadFileName = multipartFile.getOriginalFilename();
-			vo.setFileName(uploadFileName);
-			vo.setUploadPath(datePath);
-			String uuid = UUID.randomUUID().toString();
-			vo.setUuid(uuid);
-			uploadFileName = uuid + "_" + uploadFileName;
-			File saveFile = new File(uploadPath, uploadFileName);
-			try {
-				multipartFile.transferTo(saveFile);
-				File thumbnailFile = new File(uploadPath, "s_" + uploadFileName);	
-				BufferedImage bo_image = ImageIO.read(saveFile);
-					
-					double ratio = 3;
-					int width = (int) (bo_image.getWidth() / ratio);
-					int height = (int) (bo_image.getHeight() / ratio);					
-				Thumbnails.of(saveFile)
-		        .size(width, height)
-		        .toFile(thumbnailFile);
-			} catch (Exception e) {
-				e.printStackTrace();
-			} 
-			list.add(vo);
-		    } 
-	   ResponseEntity<List<AttachImageVO>> result = new ResponseEntity<List<AttachImageVO>>(list, HttpStatus.OK);
+		else if (field.equals("USERNICKNAME")) {
+			ulist = usersRepository.findByUSERNICKNAMEContaining(word, pageable);
+		}
+		int pageNumber = ulist.getPageable().getPageNumber();
+		int totalPages = ulist.getTotalPages();
+		int pageBlock = 5;
+		int startBlockPage = ((pageNumber)/pageBlock)*pageBlock+1;
+		int endBlockPage = startBlockPage+pageBlock-1;
+		endBlockPage = totalPages<endBlockPage? totalPages:endBlockPage;
 		
-		return result;
-	   }
-~~~
-### 이미지 업로드
-<div>
- <img src="https://user-images.githubusercontent.com/105841315/191144786-cf427c20-d975-44c7-9764-602358090ed3.gif">
-</div>
-
-<br>
-
-### 이미지 주소 저장
-<div>
- <img src="https://user-images.githubusercontent.com/105841315/191144950-a48d4a1d-e6d1-4619-81a0-19d566de8cae.png">
-</div>
-<br>
-
-
->이미지 게시판 구현 
-
-### BoardServiceImpl : 상품이 가지고 있는 이미지 가져오는 로직
-
-~~~java
-@Override
-	public List<BoardVO> showlist() {
-		List<BoardVO> list = mapper.getlist();
-		list.forEach(pd ->{
-			Long pdId = pd.getPno();
-			List<AttachImageVO> imageList = mapper.getAttachList(pdId);
-			pd.setImageList(imageList);
-		});
-		return list;
+		model.addAttribute("startBlockPage",startBlockPage);
+		model.addAttribute("endBlockPage",endBlockPage);
+		model.addAttribute("ulist",ulist);
+		
+		System.out.println(pageNumber);
+		System.out.println(totalPages);
+		
 	}
 ~~~
 
-### list.jsp DB에 저장되어있는 이미지 주소 불러오기
+### list.jsp : 회원관리 페이징 구현화면
+
 ~~~jsp
-    <div class="card border-0 transform-on-hover">
-	                	<a class="lightbox" href='/board/get?pno=<c:out value="${list.pno}"/>
-	                		<div class="image_wrap" data-pno="${list.imageList[0].pno}" data-path="${list.imageList[0].uploadPath}" 
-	                					data-uuid="${list.imageList[0].uuid}" data-filename="${list.imageList[0].fileName}">
-						<img alt="Card Image" class="card-img-top">
-					</div>
+<!-- 이전 -->
+<c:choose>
+	<c:when test="${ulist.first}"></c:when>
+	<c:otherwise>
+		<li class="page-item"><a class="page-link" href="/users/list/?field=${param.field}&word=${param.word}&page=0">처음</a></li>
+		<li class="page-item"><a class="page-link" href="/users/list/?field=${param.field}&word=${param.word}&page=${ulist.number-1}">&larr;</a></li>
+	</c:otherwise>
+</c:choose>
+
+	<!-- 페이지 그룹 -->
+<c:forEach begin="${startBlockPage}" end="${endBlockPage}" var="i">
+	<c:choose>		
+		<c:when test="${ulist.pageable.pageNumber+1 == i}">
+			<li class="page-item disabled"><a class="page-link" href="/users/list/?field=${param.field}&word=${param.word}&page=${i-1}">${i}</a></li>
+		</c:when>
+		<c:otherwise>
+			<li class="page-item"><a class="page-link" href="/users/list/?field=${param.field}&word=${param.word}&page=${i-1}">${i}</a></li>
+		</c:otherwise>
+	</c:choose>
+</c:forEach>
+			
+		<!-- 다음 -->
+<c:choose>
+	<c:when test="${ulist.last}"></c:when>
+	<c:otherwise>
+		<li class="page-item "><a class="page-link" href="/users/list/?field=${param.field}&word=${param.word}&page=${ulist.number+1}">&rarr;</a></li>
+		<li class="page-item "><a class="page-link" href="/users/list/?field=${param.field}&word=${param.word}&page=${ulist.totalPages-1}">마지막</a></li>
+	</c:otherwise>
+</c:choose>
+
 ~~~
-### 이미지 게시판 결과
+
 <div>
- <img width="829" alt="KakaoTalk_20220918_220142750" src="https://user-images.githubusercontent.com/105841315/191145240-79660efb-d213-4d2c-bc71-a56ca5d876cd.png">
+  <img src="https://user-images.githubusercontent.com/105841315/191143007-c847b3ed-c9de-40b9-88dd-9d8ca3958166.gif">
+</div>
+
+### list.jsp :  검색처리
+
+~~~jsp
+<form action="/users/list" class="form-inline d-flex justify-content-end"
+		method="GET">
+		<select name="field" id="field" class="form-control form-control-sm">
+			<option value="USERID">아이디</option>
+			<option value="USERNICKNAME">닉네임</option>
+		</select> 
+		<input type="text" id="word" name="word" class="form-control form-control-sm"
+			style="margin: 10px;"> 
+		<input type="submit" class="btn btn-outline-info btn-sm" value="검색">
+</form>
+~~~
+
+<div>
+  <img src="https://user-images.githubusercontent.com/105841315/191143007-c847b3ed-c9de-40b9-88dd-9d8ca3958166.gif">
+</div>
+
+### list.jsp : 삭제할건지 묻고 삭제처리
+~~~jsp
+<c:forEach items="${ulist.content}" var="user">
+	<tr>
+		<td>${user.id}</td>
+		<td>${user.USERID}</td>
+		<td>${user.USER_EMAIL}</td>
+		<td>${user.USER_REGDATE}</td>
+		<td> <a href='/users/detail?id=<c:out value="${user.id}"/>'>이동 </a>  </td>
+		<td> <a  onclick="return confirm('정말로 탈퇴시키겠습니까?');" href="/users/list/${user.id}">탈퇴</a>   </td>
+	</tr>
+</c:forEach>
+~~~
+
+<div>
+  <img src="https://user-images.githubusercontent.com/105841315/191143007-c847b3ed-c9de-40b9-88dd-9d8ca3958166.gif">
 </div>
 
 
@@ -307,7 +325,7 @@ if(!uploadResultArr || uploadResultArr.length == 0){return}
 
 
 
-# 스프링으로 진행하며 느낀점
+# 프로젝트를 진행하며 느낀점
 - 의존성 주입을 활용한 어노테이션으로 객체 자동 생성이 편하다.
 - junit의 단위테스트의 통한 편리함 뷰페이지를 만들지 않아도 코드에 에러가 있는지 확인할 수 있다.
 - 권한처리를  내가 하나하나 코딩 하는것이 아니고 spring security를 통해 쉽게 처리할 수 있다.
