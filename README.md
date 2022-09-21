@@ -76,7 +76,7 @@ function execution_daum_address(){
 ~~~
 ### 주소 API
 <div>
-  <img src="https://user-images.githubusercontent.com/105841315/191143007-c847b3ed-c9de-40b9-88dd-9d8ca3958166.gif">
+  <img src="https://user-images.githubusercontent.com/105841315/191471084-30ea488b-99fa-4cab-8d1a-68e4e2d91862.gif">
 </div>
 
 
@@ -141,10 +141,10 @@ public String userIdChk(String userId) {
 select count(*) from users where USER_ID = #{USER_ID}
 </select>
 ~~~
-  
+
   
 <div>
-  <img src="https://user-images.githubusercontent.com/105841315/191143007-c847b3ed-c9de-40b9-88dd-9d8ca3958166.gif">
+  <img src="https://user-images.githubusercontent.com/105841315/191469781-be1823cf-7e28-4e6d-a42f-7680a4c2eef9.gif">
 </div>
 
 
@@ -177,11 +177,15 @@ select count(*) from users where USER_ID = #{USER_ID}
 ~~~
 
 <div>
-  <img src="https://user-images.githubusercontent.com/105841315/191143007-c847b3ed-c9de-40b9-88dd-9d8ca3958166.gif">
+  <img src="https://user-images.githubusercontent.com/105841315/191472350-547acc52-7551-4570-9016-3b6d89fcaf8e.png">
+</div>
+<div>
+  <img src="https://user-images.githubusercontent.com/105841315/191472827-0df43c26-b0c3-4d3b-84c4-3a6a348b6804.png">
 </div>
 
 
 >  - SpringBoot 시큐리티 권한설정
+
 
 - 권한설정
 
@@ -279,8 +283,9 @@ select count(*) from users where USER_ID = #{USER_ID}
 
 ~~~
 
+
 <div>
-  <img src="https://user-images.githubusercontent.com/105841315/191143007-c847b3ed-c9de-40b9-88dd-9d8ca3958166.gif">
+  <img src="https://user-images.githubusercontent.com/105841315/191473659-18e5f438-1feb-47c2-8170-8657a3f516e0.gif">
 </div>
 
 ### list.jsp :  검색처리
