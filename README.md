@@ -177,11 +177,10 @@ select count(*) from users where USER_ID = #{USER_ID}
 ~~~
 
 <div>
-  <img src="https://user-images.githubusercontent.com/105841315/191472350-547acc52-7551-4570-9016-3b6d89fcaf8e.png">
+
+  <img src="https://user-images.githubusercontent.com/105841315/191634059-e6173333-a38b-42db-b61b-5465dcddd7e6.png">
 </div>
-<div>
-  <img src="https://user-images.githubusercontent.com/105841315/191472827-0df43c26-b0c3-4d3b-84c4-3a6a348b6804.png">
-</div>
+
 
 
 >  - SpringBoot 시큐리티 권한설정
