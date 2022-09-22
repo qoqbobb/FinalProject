@@ -304,7 +304,7 @@ select count(*) from users where USER_ID = #{USER_ID}
 ~~~
 
 <div>
-  <img src="https://user-images.githubusercontent.com/105841315/191143007-c847b3ed-c9de-40b9-88dd-9d8ca3958166.gif">
+  <img src="https://user-images.githubusercontent.com/105841315/191633604-4f55a9cd-1748-4610-ba96-163897dcb162.gif">
 </div>
 
 ### list.jsp : 삭제할건지 묻고 삭제처리
@@ -322,7 +322,7 @@ select count(*) from users where USER_ID = #{USER_ID}
 ~~~
 
 <div>
-  <img src="https://user-images.githubusercontent.com/105841315/191143007-c847b3ed-c9de-40b9-88dd-9d8ca3958166.gif">
+  <img src="https://user-images.githubusercontent.com/105841315/191633742-f3e40515-9cc6-496e-91ef-6b7e38e01374.gif">
 </div>
 
 
